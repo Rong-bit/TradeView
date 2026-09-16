@@ -1,8 +1,8 @@
 import { Market, TransactionType } from '../types';
 import { dividendScheduleMapKey, marketToYahooMarketForDividends } from './dividendTaxHelpers';
 
-/** 與 useActualDividends 一致 */
-export const ACTUAL_DIVIDENDS_LS_KEY = 'tf-actual-dividends-v14';
+/** 與 useActualDividends 一致；v16：美股改 MoneyDJ→StockAnalysis 補缺口→Yahoo 最後備援 */
+export const ACTUAL_DIVIDENDS_LS_KEY = 'tf-actual-dividends-v16';
 
 export const ACTUAL_DIVIDENDS_INVALIDATE_EVENT = 'tf-actual-dividends-invalidate';
 
