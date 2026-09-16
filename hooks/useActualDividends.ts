@@ -13,7 +13,7 @@ import {
   ACTUAL_DIVIDENDS_LS_KEY,
 } from '../utils/actualDividendCache';
 
-// v14：清除 FundClear 部署前留下的 ETF 無組成快取。
+// v16：清除缺 StockAnalysis 補洞的美股 ETF 快取（如 AVUV 2026-09）。
 const LS_KEY = ACTUAL_DIVIDENDS_LS_KEY;
 const LEGACY_LS_KEYS = [
   'tf-actual-dividends-v1',
@@ -29,6 +29,8 @@ const LEGACY_LS_KEYS = [
   'tf-actual-dividends-v11',
   'tf-actual-dividends-v12',
   'tf-actual-dividends-v13',
+  'tf-actual-dividends-v14',
+  'tf-actual-dividends-v15',
 ] as const;
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const EMPTY_CACHE_TTL_MS = 10 * 60 * 1000;
