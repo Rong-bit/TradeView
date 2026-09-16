@@ -677,8 +677,8 @@ function parseStockAnalysisDividendHtml(html: string): ActualDividendRecord[] {
 async function fetchStockAnalysisUsStockDividends(ticker: string): Promise<ActualDividendRecord[]> {
   const sanitized = String(ticker).replace(/\s/g, '').toLowerCase();
   if (!/^[a-z0-9.-]{1,12}$/.test(sanitized)) return [];
-  // 美股 ETF（如 VT）在 /etf/ 路徑；個股在 /stocks/。兩者皆試，避免 ETF 404 後無資料。
-  for (const segment of ['stocks', 'etf'] as const) {
+  // 持倉多為 ETF：先 /etf/ 再 /stocks/，避免 ETF 在 stocks 路徑拿到空頁後誤以為無資料
+  for (const segment of ['etf', 'stocks'] as const) {
     const url = `https://stockanalysis.com/${segment}/${encodeURIComponent(sanitized)}/dividend/`;
     const html = await fetchAsText(url);
     if (!html) continue;
@@ -755,8 +755,8 @@ async function fetchYahooDividendEvents(
  * 精度優先來源：
  *  - 台股 ETF：基金資訊觀測站（含預估收益組成），MoneyDJ 備援。
  *  - 台股個股：Yahoo 台股股利頁（真實發放日，快速）＋MOPS/DJ 備援＋Yahoo chart 補缺。
- *  - 美股個股：StockAnalysis dividend page（個股 /stocks/、ETF /etf/）。
- *  - 美股／台股 ETF 若上述來源皆無資料：Yahoo Finance events=div（發放日推估）。
+ *  - 美股：MoneyDJ（若有）→ StockAnalysis 補缺口（真實發放日＋較多小數）
+ *    → Yahoo chart 僅補仍缺的除息（金額較粗、發放日為估算）。
  *  - 其他市場個股與 ETF：Yahoo Finance events=div。
  */
 export async function fetchActualDividendHistory(
@@ -802,7 +802,8 @@ export async function fetchActualDividendHistory(
           isEtf: true,
         }))
       );
-      if (byExDate.size > 0) {
+      // 台股 ETF：MoneyDJ 通常夠新；美股 ETF（如 AVUV）MoneyDJ 常缺最新一季，勿提早 return
+      if (market === Market.TW && byExDate.size > 0) {
         return Array.from(byExDate.values()).sort((a, b) => b.exDate.localeCompare(a.exDate));
       }
     }
@@ -814,22 +815,24 @@ export async function fetchActualDividendHistory(
       mergeRecords(await fetchMopsTwStockDividendHistory(ticker).catch(() => []));
       mergeRecords(await fetchDjTwStockCalendarHistory(ticker).catch(() => []), { fillGapsOnly: true });
     }
+  } else if (market === Market.US) {
+    // MoneyDJ 常缺最新一季；StockAnalysis 有真實 pay date（如 AVUV 2026-09-08 → 0.4142／9/10）
+    const saRows = await fetchStockAnalysisUsStockDividends(ticker).catch(() => []);
+    mergeRecords(saRows, byExDate.size > 0 ? { fillGapsOnly: true } : undefined);
+    // Yahoo 僅補 StockAnalysis 仍缺的除息（金額較粗、發放日估算）
+    mergeRecords(await fetchYahooDividendEvents(ticker, market, yahooMarket).catch(() => []), {
+      fillGapsOnly: true,
+    });
   } else {
-    const records =
-      market === Market.US
-        ? await fetchStockAnalysisUsStockDividends(ticker).catch(() => [])
-        : await fetchYahooDividendEvents(ticker, market, yahooMarket).catch(() => []);
-    mergeRecords(records);
+    mergeRecords(await fetchYahooDividendEvents(ticker, market, yahooMarket).catch(() => []));
   }
 
-  // 台股個股：Yahoo 台股股利頁/MOPS/DJ 先提供真實發放日；Yahoo chart 只補缺口，缺口仍標示為估算發放日。
+  // 台股個股：Yahoo chart 只補缺口，缺口仍標示為估算發放日。
   if (market === Market.TW) {
     mergeRecords(
       await fetchYahooDividendEvents(ticker, market, yahooMarket).catch(() => []),
       { fillGapsOnly: true }
     );
-  } else if (byExDate.size === 0 && market === Market.US) {
-    mergeRecords(await fetchYahooDividendEvents(ticker, market, yahooMarket).catch(() => []));
   }
 
   return Array.from(byExDate.values()).sort((a, b) => b.exDate.localeCompare(a.exDate));

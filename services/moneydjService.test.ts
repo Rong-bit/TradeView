@@ -223,22 +223,40 @@ describe('fetchActualDividendHistory (live)', () => {
   );
 
   it(
-    'US ETF VTI → moneydj',
+    'US ETF VTI → moneydj（缺口可由 stockanalysis/yahoo 補）',
     async () => {
       const rows = await fetchActualDividendHistory('VTI', Market.US, 'US');
       expect(rows.length).toBeGreaterThan(0);
-      expect(rows.every(r => r.source === 'moneydj')).toBe(true);
-      console.log('US ETF VTI sample:', rows[0]);
+      expect(rows.some(r => r.source === 'moneydj')).toBe(true);
+      expect(
+        rows.every(r => r.source === 'moneydj' || r.source === 'stockanalysis' || r.source === 'yahoo')
+      ).toBe(true);
+      console.log('US ETF VTI sample:', rows[0], 'sources:', [...new Set(rows.map(r => r.source))]);
     },
     60_000
   );
 
   it(
-    'US stock AAPL → stockanalysis',
+    'US ETF AVUV → MoneyDJ→SA→Yahoo 可補到 2026-09',
+    async () => {
+      const rows = await fetchActualDividendHistory('AVUV', Market.US, 'US');
+      expect(rows.length).toBeGreaterThan(0);
+      const sep = rows.find(r => r.exDate === '2026-09-08');
+      expect(sep).toBeTruthy();
+      expect(sep!.amountPerShare).toBeGreaterThan(0.4);
+      expect(['stockanalysis', 'yahoo']).toContain(sep!.source);
+      console.log('US ETF AVUV 2026-09-08:', sep);
+    },
+    90_000
+  );
+
+  it(
+    'US stock AAPL → stockanalysis（缺口可由 yahoo 補）',
     async () => {
       const rows = await fetchActualDividendHistory('AAPL', Market.US, 'US');
       expect(rows.length).toBeGreaterThan(0);
-      expect(rows.every(r => r.source === 'stockanalysis')).toBe(true);
+      expect(rows.some(r => r.source === 'stockanalysis')).toBe(true);
+      expect(rows.every(r => r.source === 'stockanalysis' || r.source === 'yahoo')).toBe(true);
       console.log('US stock AAPL sample:', rows[0]);
     },
     60_000
