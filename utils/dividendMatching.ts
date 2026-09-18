@@ -106,8 +106,9 @@ export function tickerHasRecordedCashDividendInExMonth(
 }
 
 /**
- * 除息日當日結束時，各帳戶對該 ticker 的持股股數（> 0 才列入）。
- * 用於待補登配息：除息日沒持股則不提示補登，金額亦依此股數試算。
+ * 除息日前一日結束時，各帳戶對該 ticker 的持股股數（> 0 才列入）。
+ * 美股／ETF 等：須在除息日「之前」持有才有配息資格；除息日當天買進不計入。
+ * 用於待補登配息提示與試算股數。
  */
 export function listAccountTickerQuantitiesAtExDate(
   transactions: Transaction[],
@@ -117,7 +118,9 @@ export function listAccountTickerQuantitiesAtExDate(
   ticker: string,
   exDateYmd: string
 ): Array<{ accountId: string; quantity: number }> {
-  const d = new Date(`${exDateYmd}T23:59:59`);
+  const cumDateYmd = ymdAddCalendarDays(exDateYmd, -1);
+  if (!cumDateYmd) return [];
+  const d = new Date(`${cumDateYmd}T23:59:59`);
   if (Number.isNaN(d.getTime())) return [];
   const { accountHoldings } = getPortfolioStateAtDate(d, transactions, cashFlows, accounts);
   const upper = normalizeDividendTicker(ticker);
@@ -130,4 +133,13 @@ export function listAccountTickerQuantitiesAtExDate(
     )
     .map(h => ({ accountId: h.accountId, quantity: h.quantity }))
     .sort((a, b) => b.quantity - a.quantity);
+}
+
+/** YYYY-MM-DD 加減日（以 UTC 日曆避免時區偏移） */
+function ymdAddCalendarDays(ymd: string, deltaDays: number): string | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec((ymd || '').slice(0, 10));
+  if (!m) return null;
+  const dt = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+  dt.setUTCDate(dt.getUTCDate() + deltaDays);
+  return dt.toISOString().slice(0, 10);
 }

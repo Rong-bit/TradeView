@@ -370,7 +370,8 @@ const DividendHeatmap: React.FC = () => {
   }, [transactions, accounts, rates, baseCurrency]);
 
   /**
-   * 今年已除息、除息日當日該帳戶有持股、且「該 ticker」在除息月尚無實績（不影響同月其他股票）。
+   * 今年已除息、除息日前一日結束時該帳戶有持股、且「該 ticker」在除息月尚無實績（不影響同月其他股票）。
+   * （除息日當天買進不計入，與美股／ETF 配息資格一致。）
    */
   const pendingActualRows = useMemo((): PendingActualRow[] => {
     const todayYmd = formatLocalYmd(new Date());
