@@ -205,6 +205,11 @@ type CashDividendEntry = {
   amount: number;
 };
 
+/** 市場標籤多為「美股 (US)」；選單已有外層括號，去掉結尾代碼避免巢狀括號 */
+function marketNameWithoutCode(label: string): string {
+  return label.replace(/\s*\([A-Z]{2}\)\s*$/, '') || label;
+}
+
 type DividendTickerStat = {
   key: string;
   ticker: string;
@@ -804,7 +809,7 @@ const DividendHeatmap: React.FC = () => {
                 <option value="">{tr.dividendHeatmap.allTickers}</option>
                 {tickerStats.map(s => (
                   <option key={s.key} value={s.key}>
-                    {s.ticker} ({marketLabelMap[s.market] ?? s.market})
+                    {s.ticker} ({marketNameWithoutCode(marketLabelMap[s.market] ?? s.market)})
                   </option>
                 ))}
               </select>
