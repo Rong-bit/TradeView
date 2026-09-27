@@ -192,6 +192,16 @@ zhCN.dividendHeatmap = {
   monthTotal: '月计',
   recordedLabel: '已入账',
   pendingLabel: '待补登',
+  allTickers: '全部标的',
+  filterLabel: '标的',
+  clearFilter: '清除筛选',
+  rankingTitle: '个股股息排行',
+  rankingTotal: '累计股息',
+  rankingThisYear: '今年',
+  rankingShare: '占总股息比例',
+  soldOut: '已清仓',
+  showAll: '显示全部',
+  showLess: '收起',
 };
 zhCN.dividendTax = {
   ...zhTW.dividendTax,

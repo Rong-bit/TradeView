@@ -39,6 +39,7 @@ import {
   twEtfNhiEligibleIncomeTwd,
 } from '../utils/dividendTaxHelpers';
 import { FORM_FIELD_THEME } from '../utils/formFieldClasses';
+import DividendTickerRanking, { type DividendTickerStat } from './DividendTickerRanking';
 
 function formatGrossForConfirmEdit(market: Market, grossNative: number): string {
   if (!Number.isFinite(grossNative) || grossNative <= 0) return '0';
@@ -196,6 +197,31 @@ function exYmdYearMonth(ymd: string): { year: number; month: number } | null {
   return { year: d.getFullYear(), month: d.getMonth() };
 }
 
+type CashDividendEntry = {
+  key: string;
+  ticker: string;
+  market: Market;
+  date: string;
+  year: number;
+  month: number;
+  amount: number;
+};
+
+type DividendGrid = Record<number, Record<number, { amount: number; tickers: Record<string, number> }>>;
+
+function buildDividendGrid(entries: CashDividendEntry[], filterKey: string | null): DividendGrid {
+  const map: DividendGrid = {};
+  for (const e of entries) {
+    if (filterKey && e.key !== filterKey) continue;
+    if (!map[e.year]) map[e.year] = {};
+    if (!map[e.year][e.month]) map[e.year][e.month] = { amount: 0, tickers: {} };
+    const cell = map[e.year][e.month];
+    cell.amount += e.amount;
+    cell.tickers[e.ticker] = (cell.tickers[e.ticker] ?? 0) + e.amount;
+  }
+  return map;
+}
+
 type PendingActualRow = {
   key: string;
   ticker: string;
@@ -227,6 +253,7 @@ const DividendHeatmap: React.FC = () => {
     () => readPendingDividendListVisible()
   );
   const [confirmState, setConfirmState] = useState<PendingConfirmState | null>(null);
+  const [selectedTickerKey, setSelectedTickerKey] = useState<string | null>(null);
 
   useEffect(() => {
     const syncDismissedKeys = () => setDismissedPendingKeys(readDismissedPendingDividendKeys());
@@ -332,22 +359,63 @@ const DividendHeatmap: React.FC = () => {
   }, [mergedHoldingsForDiv, transactions]);
   const actualDividendsMap = useActualDividends(dividendRequests);
 
-  const { grid, years, maxAmount, totalDividend, monthTotals, yearTotals } = useMemo(() => {
-    const map: Record<number, Record<number, { amount: number; tickers: Record<string, number> }>> = {};
+  const cashDividendEntries = useMemo(
+    (): CashDividendEntry[] =>
+      transactions
+        .filter(tx => tx.type === TransactionType.CASH_DIVIDEND && tx.ticker?.trim())
+        .map(tx => {
+          const d = new Date(tx.date);
+          const amountTWD = transactionAmountNativeToTWD(cashDividendNetNative(tx), tx, accounts, rates);
+          return {
+            key: dividendScheduleMapKey(tx.market, tx.ticker),
+            ticker: tx.ticker,
+            market: tx.market,
+            date: tx.date,
+            year: d.getFullYear(),
+            month: d.getMonth(),
+            amount: toBase(amountTWD),
+          };
+        }),
+    [transactions, accounts, rates, baseCurrency]
+  );
 
-    transactions.forEach(tx => {
-      if (tx.type !== TransactionType.CASH_DIVIDEND) return;
-      const d = new Date(tx.date);
-      const year = d.getFullYear();
-      const month = d.getMonth();
-      const amt = cashDividendNetNative(tx);
-      const amountTWD = transactionAmountNativeToTWD(amt, tx, accounts, rates);
-      const amount = toBase(amountTWD);
-      if (!map[year]) map[year] = {};
-      if (!map[year][month]) map[year][month] = { amount: 0, tickers: {} };
-      map[year][month].amount += amount;
-      map[year][month].tickers[tx.ticker] = (map[year][month].tickers[tx.ticker] ?? 0) + amount;
-    });
+  const fullGrid = useMemo(() => buildDividendGrid(cashDividendEntries, null), [cashDividendEntries]);
+
+  const tickerStats = useMemo((): DividendTickerStat[] => {
+    const currentYear = new Date().getFullYear();
+    const heldKeys = new Set(
+      holdings.filter(h => h.quantity > 0).map(h => dividendScheduleMapKey(h.market, h.ticker))
+    );
+    const m = new Map<string, DividendTickerStat>();
+    for (const e of cashDividendEntries) {
+      const prev = m.get(e.key);
+      if (prev) {
+        prev.total += e.amount;
+        if (e.year === currentYear) prev.thisYear += e.amount;
+        if (e.date > prev.lastDate) prev.lastDate = e.date;
+      } else {
+        m.set(e.key, {
+          key: e.key,
+          ticker: e.ticker.trim().toUpperCase(),
+          market: e.market,
+          total: e.amount,
+          thisYear: e.year === currentYear ? e.amount : 0,
+          lastDate: e.date,
+          isHeld: heldKeys.has(e.key),
+        });
+      }
+    }
+    return [...m.values()].filter(s => s.total > 0).sort((a, b) => b.total - a.total);
+  }, [cashDividendEntries, holdings]);
+
+  useEffect(() => {
+    if (selectedTickerKey && !tickerStats.some(s => s.key === selectedTickerKey)) {
+      setSelectedTickerKey(null);
+    }
+  }, [selectedTickerKey, tickerStats]);
+
+  const { grid, years, maxAmount, totalDividend, monthTotals, yearTotals } = useMemo(() => {
+    const map = selectedTickerKey ? buildDividendGrid(cashDividendEntries, selectedTickerKey) : fullGrid;
 
     const years = Object.keys(map).map(Number).sort();
     let maxAmount = 0;
@@ -367,7 +435,7 @@ const DividendHeatmap: React.FC = () => {
     });
 
     return { grid: map, years, maxAmount, totalDividend: total, monthTotals, yearTotals };
-  }, [transactions, accounts, rates, baseCurrency]);
+  }, [cashDividendEntries, fullGrid, selectedTickerKey]);
 
   /**
    * 今年已除息、除息日前一日結束時該帳戶有持股、且「該 ticker」在除息月尚無實績（不影響同月其他股票）。
@@ -390,7 +458,7 @@ const DividendHeatmap: React.FC = () => {
 
         const exYm = exYmdYearMonth(rec.exDate);
         if (!exYm) continue;
-        const recordedTickersInMonth = grid[exYm.year]?.[exYm.month]?.tickers;
+        const recordedTickersInMonth = fullGrid[exYm.year]?.[exYm.month]?.tickers;
 
         const holdersAtEx = listAccountTickerQuantitiesAtExDate(
           transactions,
@@ -445,7 +513,7 @@ const DividendHeatmap: React.FC = () => {
         a.accountId.localeCompare(b.accountId)
     );
     return rows;
-  }, [dividendRequests, actualDividendsMap, transactions, cashFlows, accounts, grid]);
+  }, [dividendRequests, actualDividendsMap, transactions, cashFlows, accounts, fullGrid]);
 
   const visiblePendingRows = useMemo(
     () => pendingActualRows.filter(row => !dismissedPendingKeys.has(row.key)),
@@ -671,6 +739,9 @@ const DividendHeatmap: React.FC = () => {
     return v.toFixed(0);
   };
 
+  const selectedTickerStat = selectedTickerKey
+    ? tickerStats.find(s => s.key === selectedTickerKey) ?? null
+    : null;
   const hoveredData = hoveredCell ? grid[hoveredCell.year]?.[hoveredCell.month] : null;
   const bestMonth = monthTotals.indexOf(Math.max(...monthTotals));
   const hasHeatmapData = displayYears.length > 0;
@@ -706,14 +777,47 @@ const DividendHeatmap: React.FC = () => {
 
   return (
     <div className="bg-white p-6 rounded-xl shadow overflow-hidden">
-      <div className="flex justify-between items-start mb-5">
-        <div>
-          <h3 className="font-bold text-slate-800 text-xl">{tr.dividendHeatmap.title}</h3>
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-start mb-5">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="font-bold text-slate-800 text-xl">{tr.dividendHeatmap.title}</h3>
+            {selectedTickerStat && (
+              <button
+                type="button"
+                onClick={() => setSelectedTickerKey(null)}
+                className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-sm font-semibold text-amber-800 hover:bg-amber-100"
+                title={tr.dividendHeatmap.clearFilter}
+              >
+                <span className="font-mono">{selectedTickerStat.ticker}</span>
+                <span aria-hidden>×</span>
+                <span className="sr-only">{tr.dividendHeatmap.clearFilter}</span>
+              </button>
+            )}
+          </div>
           <p className="text-sm text-slate-500 mt-0.5 leading-relaxed">{tr.dividendHeatmap.subtitle}</p>
         </div>
-        <div className="text-right">
-          <div className="text-sm text-slate-400">{tr.dividendHeatmap.totalDividend}</div>
-          <div className="text-lg font-bold text-amber-600">{fmt(totalDividend)} {baseCurrency}</div>
+        <div className="flex items-end justify-between gap-4 sm:flex-col sm:items-end sm:gap-2 shrink-0">
+          {tickerStats.length > 0 && (
+            <label className="flex items-center gap-2 text-sm text-slate-500">
+              <span className="shrink-0">{tr.dividendHeatmap.filterLabel}</span>
+              <select
+                value={selectedTickerKey ?? ''}
+                onChange={e => setSelectedTickerKey(e.target.value || null)}
+                className={`max-w-[11rem] rounded-md border border-slate-300 px-2 py-1 text-sm ${FORM_FIELD_THEME}`}
+              >
+                <option value="">{tr.dividendHeatmap.allTickers}</option>
+                {tickerStats.map(s => (
+                  <option key={s.key} value={s.key}>
+                    {s.ticker} ({marketLabelMap[s.market] ?? s.market})
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <div className="text-right">
+            <div className="text-sm text-slate-400">{tr.dividendHeatmap.totalDividend}</div>
+            <div className="text-lg font-bold text-amber-600">{fmt(totalDividend)} {baseCurrency}</div>
+          </div>
         </div>
       </div>
 
@@ -833,6 +937,16 @@ const DividendHeatmap: React.FC = () => {
           </span>
         </div>
       </div>
+
+      <DividendTickerRanking
+        rows={tickerStats}
+        selectedKey={selectedTickerKey}
+        onSelect={setSelectedTickerKey}
+        baseCurrency={baseCurrency}
+        marketLabelMap={marketLabelMap}
+        fmt={fmt}
+        labels={tr.dividendHeatmap}
+      />
 
       <div className="mt-6 border-t border-slate-100 pt-4">
         <div className="mb-2 flex items-center justify-between gap-2">
