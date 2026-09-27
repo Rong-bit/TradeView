@@ -250,13 +250,6 @@ export const zhTW: Translations = {
     allTickers: '全部標的',
     filterLabel: '標的',
     clearFilter: '清除篩選',
-    rankingTitle: '個股股利排行',
-    rankingTotal: '累積股利',
-    rankingThisYear: '今年',
-    rankingShare: '占總股利比例',
-    soldOut: '已出清',
-    showAll: '顯示全部',
-    showLess: '收合',
   },
   dividendTax: {
     twTooltipTitle: '稅務試算（參考）',

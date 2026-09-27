@@ -253,13 +253,6 @@ export const ja: Translations = {
     allTickers: '全銘柄',
     filterLabel: '銘柄',
     clearFilter: 'フィルター解除',
-    rankingTitle: '銘柄別配当ランキング',
-    rankingTotal: '累計配当',
-    rankingThisYear: '今年',
-    rankingShare: '配当総額に占める割合',
-    soldOut: '売却済',
-    showAll: 'すべて表示',
-    showLess: '閉じる',
   },
   dividendTax: {
     twTooltipTitle: '税務試算（参考）',

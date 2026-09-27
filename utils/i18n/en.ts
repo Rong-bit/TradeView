@@ -254,13 +254,6 @@ export const en: Translations = {
     allTickers: 'All tickers',
     filterLabel: 'Ticker',
     clearFilter: 'Clear filter',
-    rankingTitle: 'Dividends by Ticker',
-    rankingTotal: 'Total dividends',
-    rankingThisYear: 'YTD',
-    rankingShare: 'Share of total dividends',
-    soldOut: 'Sold',
-    showAll: 'Show all',
-    showLess: 'Show less',
   },
   dividendTax: {
     twTooltipTitle: 'Tax estimate (reference)',

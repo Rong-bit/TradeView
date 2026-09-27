@@ -288,13 +288,6 @@ export interface Translations {
     allTickers: string;
     filterLabel: string;
     clearFilter: string;
-    rankingTitle: string;
-    rankingTotal: string;
-    rankingThisYear: string;
-    rankingShare: string;
-    soldOut: string;
-    showAll: string;
-    showLess: string;
   };
   /** 配息試算：台股二代健保、美股預扣、待補登實績清單 */
   dividendTax: {

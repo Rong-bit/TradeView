@@ -223,13 +223,6 @@ export const de: Translations = {
     allTickers: 'Alle Titel',
     filterLabel: 'Titel',
     clearFilter: 'Filter entfernen',
-    rankingTitle: 'Dividenden nach Titel',
-    rankingTotal: 'Ges. Dividenden',
-    rankingThisYear: 'Lfd. Jahr',
-    rankingShare: 'Anteil an Gesamtdividenden',
-    soldOut: 'Verkauft',
-    showAll: 'Alle anzeigen',
-    showLess: 'Weniger',
   },
   dividendTax: {
     twTooltipTitle: 'Steuerschaetzung (Referenz)',

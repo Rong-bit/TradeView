@@ -253,13 +253,6 @@ export const ko: Translations = {
     allTickers: '전체 종목',
     filterLabel: '종목',
     clearFilter: '필터 해제',
-    rankingTitle: '종목별 배당 순위',
-    rankingTotal: '누적 배당',
-    rankingThisYear: '올해',
-    rankingShare: '전체 배당 대비 비중',
-    soldOut: '매도 완료',
-    showAll: '모두 보기',
-    showLess: '접기',
   },
   dividendTax: {
     twTooltipTitle: '세금 추정(참고)',

@@ -199,13 +199,6 @@ export const pt: Translations = {
     allTickers: 'Todos os ativos',
     filterLabel: 'Ativo',
     clearFilter: 'Limpar filtro',
-    rankingTitle: 'Dividendos por ativo',
-    rankingTotal: 'Total dividendos',
-    rankingThisYear: 'Este ano',
-    rankingShare: 'Parte do total de dividendos',
-    soldOut: 'Vendido',
-    showAll: 'Mostrar tudo',
-    showLess: 'Mostrar menos',
   },
   dividendTax: {
     twTooltipTitle: 'Simulação fiscal (referência)',

@@ -199,13 +199,6 @@ export const hi: Translations = {
     allTickers: 'सभी स्टॉक',
     filterLabel: 'स्टॉक',
     clearFilter: 'फ़िल्टर हटाएँ',
-    rankingTitle: 'स्टॉक अनुसार लाभांश',
-    rankingTotal: 'कुल लाभांश',
-    rankingThisYear: 'इस वर्ष',
-    rankingShare: 'कुल लाभांश में हिस्सा',
-    soldOut: 'बेचा गया',
-    showAll: 'सभी दिखाएँ',
-    showLess: 'कम दिखाएँ',
   },
   dividendTax: {
     twTooltipTitle: 'कर अनुमान (संदर्भ)',

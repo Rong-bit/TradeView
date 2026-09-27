@@ -199,13 +199,6 @@ export const ar: Translations = {
     allTickers: 'جميع الأسهم',
     filterLabel: 'السهم',
     clearFilter: 'مسح الفلتر',
-    rankingTitle: 'الأرباح حسب السهم',
-    rankingTotal: 'إجمالي الأرباح',
-    rankingThisYear: 'هذا العام',
-    rankingShare: 'النسبة من إجمالي الأرباح',
-    soldOut: 'مباع',
-    showAll: 'عرض الكل',
-    showLess: 'عرض أقل',
   },
   dividendTax: {
     twTooltipTitle: 'تقدير ضريبي (مرجع)',

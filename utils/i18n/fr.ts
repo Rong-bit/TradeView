@@ -224,13 +224,6 @@ export const fr: Translations = {
     allTickers: 'Tous les titres',
     filterLabel: 'Titre',
     clearFilter: 'Effacer le filtre',
-    rankingTitle: 'Dividendes par titre',
-    rankingTotal: 'Total dividendes',
-    rankingThisYear: 'Cette année',
-    rankingShare: 'Part du total des dividendes',
-    soldOut: 'Vendu',
-    showAll: 'Tout afficher',
-    showLess: 'Réduire',
   },
   dividendTax: {
     twTooltipTitle: 'Estimation fiscale (indicative)',

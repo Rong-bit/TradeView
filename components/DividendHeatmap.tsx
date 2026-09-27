@@ -39,8 +39,6 @@ import {
   twEtfNhiEligibleIncomeTwd,
 } from '../utils/dividendTaxHelpers';
 import { FORM_FIELD_THEME } from '../utils/formFieldClasses';
-import DividendTickerRanking, { type DividendTickerStat } from './DividendTickerRanking';
-
 function formatGrossForConfirmEdit(market: Market, grossNative: number): string {
   if (!Number.isFinite(grossNative) || grossNative <= 0) return '0';
   if (market === Market.US) return formatUsDividendNativeAmount(grossNative);
@@ -205,6 +203,13 @@ type CashDividendEntry = {
   year: number;
   month: number;
   amount: number;
+};
+
+type DividendTickerStat = {
+  key: string;
+  ticker: string;
+  market: Market;
+  total: number;
 };
 
 type DividendGrid = Record<number, Record<number, { amount: number; tickers: Record<string, number> }>>;
@@ -382,31 +387,22 @@ const DividendHeatmap: React.FC = () => {
   const fullGrid = useMemo(() => buildDividendGrid(cashDividendEntries, null), [cashDividendEntries]);
 
   const tickerStats = useMemo((): DividendTickerStat[] => {
-    const currentYear = new Date().getFullYear();
-    const heldKeys = new Set(
-      holdings.filter(h => h.quantity > 0).map(h => dividendScheduleMapKey(h.market, h.ticker))
-    );
     const m = new Map<string, DividendTickerStat>();
     for (const e of cashDividendEntries) {
       const prev = m.get(e.key);
       if (prev) {
         prev.total += e.amount;
-        if (e.year === currentYear) prev.thisYear += e.amount;
-        if (e.date > prev.lastDate) prev.lastDate = e.date;
       } else {
         m.set(e.key, {
           key: e.key,
           ticker: e.ticker.trim().toUpperCase(),
           market: e.market,
           total: e.amount,
-          thisYear: e.year === currentYear ? e.amount : 0,
-          lastDate: e.date,
-          isHeld: heldKeys.has(e.key),
         });
       }
     }
     return [...m.values()].filter(s => s.total > 0).sort((a, b) => b.total - a.total);
-  }, [cashDividendEntries, holdings]);
+  }, [cashDividendEntries]);
 
   useEffect(() => {
     if (selectedTickerKey && !tickerStats.some(s => s.key === selectedTickerKey)) {
@@ -937,16 +933,6 @@ const DividendHeatmap: React.FC = () => {
           </span>
         </div>
       </div>
-
-      <DividendTickerRanking
-        rows={tickerStats}
-        selectedKey={selectedTickerKey}
-        onSelect={setSelectedTickerKey}
-        baseCurrency={baseCurrency}
-        marketLabelMap={marketLabelMap}
-        fmt={fmt}
-        labels={tr.dividendHeatmap}
-      />
 
       <div className="mt-6 border-t border-slate-100 pt-4">
         <div className="mb-2 flex items-center justify-between gap-2">
