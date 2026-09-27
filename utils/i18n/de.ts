@@ -603,7 +603,7 @@ Die folgenden Abschnitte folgen der Reihenfolge im Hamburger-Menü (**Gast** und
 ### Uebersicht
 „Uebersicht" ist die Standard-Startseite mit Leistungsübersichtskarten und Bestandsdetails. **Mitglieder** erhalten zusätzlich kumulative G/V-Diagramme, Allokationsdiagramm, Marktperformance und Dividenden-Heatmap. Bei Schulden auf Verbindlichkeitskonten erscheinen Karten zu **Kredit & Verbindlichkeiten** (siehe Kredit-Q&A unten).
 
-**Dividenden-Heatmap (Mitglieder)**: Bei ausstehenden Einträgen vom Typ **Dividenden-Reinvestition (DRIP)** gehen Sie zu „Transaktionen" und tippen „+ Eintrag hinzufügen"; **nicht** „Hinzufügen" in der Heatmap-Liste (dieser Button gilt nur für Bardividenden).
+**Dividenden-Heatmap (Mitglieder)**: Über das Menü „Titel" oben rechts lässt sich ein einzelner Titel anzeigen (sortiert nach kumulierten Bardividenden, absteigend); Heatmap, Jahres- und Monatssummen sowie die Gesamtdividenden zählen dann nur diesen Titel. Tippen Sie auf „Titel ×" neben der Überschrift oder wählen Sie „Alle Titel", um den Filter zu entfernen. Bei ausstehenden Einträgen vom Typ **Dividenden-Reinvestition (DRIP)** gehen Sie zu „Transaktionen" und tippen „+ Eintrag hinzufügen"; **nicht** „Hinzufügen" in der Heatmap-Liste (dieser Button gilt nur für Bardividenden).
 
 ### Transaktionen
 Erfassen Sie Käufe, Verkäufe, Dividenden und Aktienübertragungen. Oben rechts „+ Eintrag hinzufügen"; mit „Märkte stapelweise aktualisieren" passen Sie die Markteinstellung mehrerer Transaktionen auf einmal an. Außerdem **„Stapelimport"** und **„Gefilterte Transaktionen löschen"**.

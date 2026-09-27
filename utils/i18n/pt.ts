@@ -630,7 +630,7 @@ As secções abaixo seguem a ordem do menu hamburger (**convidado** e **membro**
 ### Painel
 « Painel » é a página inicial com cartões de resumo e detalhe de posições. **Membros** : gráficos P/L acumulado, diagrama de alocação, desempenho de mercado e mapa de calor de dividendos. Com dívida em conta passivo, cartões **Crédito & dívida** (ver Q&A abaixo).
 
-**Mapa de calor de dividendos (membros)** : para **Reinvestimento de dividendos (DRIP)** pendente, vá a « Histórico » e « + Adicionar registro » ; **não** clique em « Adicionar » na lista pendente (apenas dividendos em dinheiro).
+**Mapa de calor de dividendos (membros)** : o menu « Ativo » no canto superior direito permite mostrar apenas um ativo (ordenados do maior para o menor total de dividendos em dinheiro); o mapa, os totais anuais e mensais e o total de dividendos passam a contar só esse ativo. Toque em « ativo × » junto ao título ou escolha « Todos os ativos » para limpar o filtro. Para **Reinvestimento de dividendos (DRIP)** pendente, vá a « Histórico » e « + Adicionar registro » ; **não** clique em « Adicionar » na lista pendente (apenas dividendos em dinheiro).
 
 ### Histórico
 Registe compras, vendas, dividendos e transferências de acções. « + Adicionar registro » no canto superior direito ; « Atualizar mercados em lote » para várias transacções. Também **« Importação em lote »** e **« Limpar transações filtradas »**.

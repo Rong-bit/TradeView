@@ -696,7 +696,7 @@ The sections below follow the hamburger menu order (**guest** and **member** vis
 ### Dashboard
 "Dashboard" is the default home page, showing performance summary cards and holdings. **Members** also get cumulative P/L charts, asset allocation pie chart, market performance, and dividend heatmap. If you have liability account debt, **Credit & debt** cards appear (see Credit Q&A below).
 
-**Dividend heatmap (members)**: For pending items that are **Dividend Reinvestment (DRIP)**, go to "Transactions" and tap "+ Add Record"—do **not** use **Add** on the heatmap pending list (that button is for cash dividends only).
+**Dividend heatmap (members)**: Use the "Ticker" menu at the top right to show a single ticker (listed from highest to lowest total cash dividends); the heatmap, year and month totals, and total dividends then count only that ticker. Tap the "ticker ×" chip next to the title or choose "All tickers" to clear the filter. For pending items that are **Dividend Reinvestment (DRIP)**, go to "Transactions" and tap "+ Add Record"—do **not** use **Add** on the heatmap pending list (that button is for cash dividends only).
 
 ### Transactions
 Record buys, sells, dividends, and stock transfers. Tap "+ Add Record" in the top right to add entries; use "Batch Update Market" to adjust market settings for multiple transactions at once. You can also tap **"Batch Import"** or **"Clear Filtered Transactions"**.
