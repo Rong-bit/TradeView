@@ -205,6 +205,9 @@ type CashDividendEntry = {
   amount: number;
 };
 
+/** 阿拉伯文等 RTL 介面中，數字代號（如 0050）無方向性，會被排到右側；強制選項由左至右，與英文代號一致 */
+const LTR_MARK = '\u200E';
+
 /** 市場標籤多為「美股 (US)」；選單已有外層括號，去掉結尾代碼避免巢狀括號 */
 function marketNameWithoutCode(label: string): string {
   return label.replace(/\s*\([A-Z]{2}\)\s*$/, '') || label;
@@ -809,7 +812,7 @@ const DividendHeatmap: React.FC = () => {
                 <option value="">{tr.dividendHeatmap.allTickers}</option>
                 {tickerStats.map(s => (
                   <option key={s.key} value={s.key}>
-                    {s.ticker} ({marketNameWithoutCode(marketLabelMap[s.market] ?? s.market)})
+                    {`${LTR_MARK}${s.ticker} (${marketNameWithoutCode(marketLabelMap[s.market] ?? s.market)})`}
                   </option>
                 ))}
               </select>
