@@ -224,6 +224,8 @@ export const fr: Translations = {
     allTickers: 'Tous les titres',
     filterLabel: 'Titre',
     clearFilter: 'Effacer le filtre',
+    accountFilterLabel: 'Compte',
+    allAccounts: 'Tous les comptes',
   },
   dividendTax: {
     twTooltipTitle: 'Estimation fiscale (indicative)',
@@ -631,7 +633,7 @@ Les sections ci-dessous suivent l'ordre du menu hamburger (**invité** et **memb
 ### Tableau de bord
 « Tableau de bord » est la page d'accueil par défaut avec cartes résumé et détail des positions. **Membres** : graphiques P/L cumulé, diagramme d'allocation, performance marché et carte thermique des dividendes. En cas de dette sur compte passif, cartes **Crédit & passif** (voir Q&R crédit ci-dessous).
 
-**Carte thermique des dividendes (membres)** : le menu « Titre » en haut à droite permet d'afficher un seul titre (classés du plus au moins de dividendes en espèces cumulés) ; la carte, les totaux annuels et mensuels et le total des dividendes ne comptent alors que ce titre. Touchez « titre × » à côté du titre de la carte ou choisissez « Tous les titres » pour effacer le filtre. Pour un **Réinvestissement des dividendes (DRIP)** en attente, allez dans « Historique » et « + Ajouter un enregistrement » ; **ne pas** appuyer sur « Ajouter » dans la liste en attente (réservé aux dividendes en espèces).
+**Carte thermique des dividendes (membres)** : le menu « Titre » en haut à droite permet d'afficher un seul titre (classés du plus au moins de dividendes en espèces cumulés) ; la carte, les totaux annuels et mensuels et le total des dividendes ne comptent alors que ce titre. Si plusieurs comptes ont reçu des dividendes de ce titre, un menu « Compte » apparaît en dessous pour restreindre à un seul compte. Touchez « Effacer le filtre » sous les menus pour tout afficher à nouveau. Pour un **Réinvestissement des dividendes (DRIP)** en attente, allez dans « Historique » et « + Ajouter un enregistrement » ; **ne pas** appuyer sur « Ajouter » dans la liste en attente (réservé aux dividendes en espèces).
 
 ### Historique
 Enregistrez achats, ventes, dividendes et transferts d'actions. « + Ajouter un enregistrement » en haut à droite ; « Mise à jour groupée des marchés » pour ajuster plusieurs transactions. Vous pouvez aussi **« Import groupé »** et **« Effacer les transactions filtrées »**.

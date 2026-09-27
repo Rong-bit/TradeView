@@ -197,6 +197,7 @@ function exYmdYearMonth(ymd: string): { year: number; month: number } | null {
 
 type CashDividendEntry = {
   key: string;
+  accountId: string;
   ticker: string;
   market: Market;
   date: string;
@@ -222,10 +223,15 @@ type DividendTickerStat = {
 
 type DividendGrid = Record<number, Record<number, { amount: number; tickers: Record<string, number> }>>;
 
-function buildDividendGrid(entries: CashDividendEntry[], filterKey: string | null): DividendGrid {
+function buildDividendGrid(
+  entries: CashDividendEntry[],
+  tickerKey: string | null,
+  accountId: string | null
+): DividendGrid {
   const map: DividendGrid = {};
   for (const e of entries) {
-    if (filterKey && e.key !== filterKey) continue;
+    if (tickerKey && e.key !== tickerKey) continue;
+    if (accountId && e.accountId !== accountId) continue;
     if (!map[e.year]) map[e.year] = {};
     if (!map[e.year][e.month]) map[e.year][e.month] = { amount: 0, tickers: {} };
     const cell = map[e.year][e.month];
@@ -267,6 +273,7 @@ const DividendHeatmap: React.FC = () => {
   );
   const [confirmState, setConfirmState] = useState<PendingConfirmState | null>(null);
   const [selectedTickerKey, setSelectedTickerKey] = useState<string | null>(null);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
 
   useEffect(() => {
     const syncDismissedKeys = () => setDismissedPendingKeys(readDismissedPendingDividendKeys());
@@ -381,6 +388,7 @@ const DividendHeatmap: React.FC = () => {
           const amountTWD = transactionAmountNativeToTWD(cashDividendNetNative(tx), tx, accounts, rates);
           return {
             key: dividendScheduleMapKey(tx.market, tx.ticker),
+            accountId: tx.accountId,
             ticker: tx.ticker,
             market: tx.market,
             date: tx.date,
@@ -392,11 +400,38 @@ const DividendHeatmap: React.FC = () => {
     [transactions, accounts, rates, baseCurrency]
   );
 
-  const fullGrid = useMemo(() => buildDividendGrid(cashDividendEntries, null), [cashDividendEntries]);
+  const fullGrid = useMemo(
+    () => buildDividendGrid(cashDividendEntries, null, null),
+    [cashDividendEntries]
+  );
+
+  const accountIdsWithDividends = (tickerKey: string | null): string[] => {
+    const ids = new Set(
+      cashDividendEntries
+        .filter(e => e.amount > 0 && (!tickerKey || e.key === tickerKey))
+        .map(e => e.accountId)
+    );
+    const known = accounts.filter(a => ids.has(a.id)).map(a => a.id);
+    const unknown = [...ids].filter(id => !known.includes(id));
+    return [...known, ...unknown];
+  };
+
+  const accountOptions = useMemo(
+    () => accountIdsWithDividends(selectedTickerKey),
+    [cashDividendEntries, accounts, selectedTickerKey]
+  );
+  const showAccountMenu = accountOptions.length > 1;
+
+  useEffect(() => {
+    if (selectedAccountId && (!showAccountMenu || !accountOptions.includes(selectedAccountId))) {
+      setSelectedAccountId(null);
+    }
+  }, [selectedAccountId, accountOptions, showAccountMenu]);
 
   const tickerStats = useMemo((): DividendTickerStat[] => {
     const m = new Map<string, DividendTickerStat>();
     for (const e of cashDividendEntries) {
+      if (selectedAccountId && e.accountId !== selectedAccountId) continue;
       const prev = m.get(e.key);
       if (prev) {
         prev.total += e.amount;
@@ -410,7 +445,7 @@ const DividendHeatmap: React.FC = () => {
       }
     }
     return [...m.values()].filter(s => s.total > 0).sort((a, b) => b.total - a.total);
-  }, [cashDividendEntries]);
+  }, [cashDividendEntries, selectedAccountId]);
 
   useEffect(() => {
     if (selectedTickerKey && !tickerStats.some(s => s.key === selectedTickerKey)) {
@@ -419,7 +454,10 @@ const DividendHeatmap: React.FC = () => {
   }, [selectedTickerKey, tickerStats]);
 
   const { grid, years, maxAmount, totalDividend, monthTotals, yearTotals } = useMemo(() => {
-    const map = selectedTickerKey ? buildDividendGrid(cashDividendEntries, selectedTickerKey) : fullGrid;
+    const map =
+      selectedTickerKey || selectedAccountId
+        ? buildDividendGrid(cashDividendEntries, selectedTickerKey, selectedAccountId)
+        : fullGrid;
 
     const years = Object.keys(map).map(Number).sort();
     let maxAmount = 0;
@@ -439,7 +477,7 @@ const DividendHeatmap: React.FC = () => {
     });
 
     return { grid: map, years, maxAmount, totalDividend: total, monthTotals, yearTotals };
-  }, [cashDividendEntries, fullGrid, selectedTickerKey]);
+  }, [cashDividendEntries, fullGrid, selectedTickerKey, selectedAccountId]);
 
   /**
    * 今年已除息、除息日前一日結束時該帳戶有持股、且「該 ticker」在除息月尚無實績（不影響同月其他股票）。
@@ -743,9 +781,6 @@ const DividendHeatmap: React.FC = () => {
     return v.toFixed(0);
   };
 
-  const selectedTickerStat = selectedTickerKey
-    ? tickerStats.find(s => s.key === selectedTickerKey) ?? null
-    : null;
   const hoveredData = hoveredCell ? grid[hoveredCell.year]?.[hoveredCell.month] : null;
   const bestMonth = monthTotals.indexOf(Math.max(...monthTotals));
   const hasHeatmapData = displayYears.length > 0;
@@ -783,42 +818,61 @@ const DividendHeatmap: React.FC = () => {
     <div className="bg-white p-6 rounded-xl shadow overflow-hidden">
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-start mb-5">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-bold text-slate-800 text-xl">{tr.dividendHeatmap.title}</h3>
-            {selectedTickerStat && (
-              <button
-                type="button"
-                onClick={() => setSelectedTickerKey(null)}
-                className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-sm font-semibold text-amber-800 hover:bg-amber-100"
-                title={tr.dividendHeatmap.clearFilter}
-              >
-                <span className="font-mono">{selectedTickerStat.ticker}</span>
-                <span aria-hidden>×</span>
-                <span className="sr-only">{tr.dividendHeatmap.clearFilter}</span>
-              </button>
-            )}
-          </div>
+          <h3 className="font-bold text-slate-800 text-xl">{tr.dividendHeatmap.title}</h3>
           <p className="text-sm text-slate-500 mt-0.5 leading-relaxed">{tr.dividendHeatmap.subtitle}</p>
         </div>
-        <div className="flex items-end justify-between gap-4 sm:flex-col sm:items-end sm:gap-2 shrink-0">
-          {tickerStats.length > 0 && (
-            <label className="flex items-center gap-2 text-sm text-slate-500">
-              <span className="shrink-0">{tr.dividendHeatmap.filterLabel}</span>
-              <select
-                value={selectedTickerKey ?? ''}
-                onChange={e => setSelectedTickerKey(e.target.value || null)}
-                className={`max-w-[11rem] rounded-md border border-slate-300 px-2 py-1 text-sm ${FORM_FIELD_THEME}`}
-              >
-                <option value="">{tr.dividendHeatmap.allTickers}</option>
-                {tickerStats.map(s => (
-                  <option key={s.key} value={s.key}>
-                    {`${LTR_MARK}${s.ticker} (${marketNameWithoutCode(marketLabelMap[s.market] ?? s.market)})`}
-                  </option>
-                ))}
-              </select>
-            </label>
+        <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2 sm:flex-col sm:flex-nowrap sm:items-end sm:gap-2 shrink-0">
+          {(tickerStats.length > 0 || showAccountMenu) && (
+            <div className="flex min-w-0 flex-col gap-2 sm:items-end lg:flex-row lg:items-center lg:gap-4">
+              {tickerStats.length > 0 && (
+                <label className="flex items-center gap-2 text-sm text-slate-500">
+                  <span className="min-w-10 shrink-0">{tr.dividendHeatmap.filterLabel}</span>
+                  <select
+                    value={selectedTickerKey ?? ''}
+                    onChange={e => setSelectedTickerKey(e.target.value || null)}
+                    className={`w-[11rem] rounded-md border border-slate-300 px-2 py-1 text-sm ${FORM_FIELD_THEME}`}
+                  >
+                    <option value="">{tr.dividendHeatmap.allTickers}</option>
+                    {tickerStats.map(s => (
+                      <option key={s.key} value={s.key}>
+                        {`${LTR_MARK}${s.ticker} (${marketNameWithoutCode(marketLabelMap[s.market] ?? s.market)})`}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              {showAccountMenu && (
+                <label className="flex items-center gap-2 text-sm text-slate-500">
+                  <span className="min-w-10 shrink-0">{tr.dividendHeatmap.accountFilterLabel}</span>
+                  <select
+                    value={selectedAccountId ?? ''}
+                    onChange={e => setSelectedAccountId(e.target.value || null)}
+                    className={`w-[11rem] rounded-md border border-slate-300 px-2 py-1 text-sm ${FORM_FIELD_THEME}`}
+                  >
+                    <option value="">{tr.dividendHeatmap.allAccounts}</option>
+                    {accountOptions.map(id => (
+                      <option key={id} value={id}>
+                        {getAccountName(id)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              {(selectedTickerKey || selectedAccountId) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedTickerKey(null);
+                    setSelectedAccountId(null);
+                  }}
+                  className="self-start text-sm font-medium text-sky-700 underline underline-offset-2 hover:text-sky-900 sm:self-end lg:self-center"
+                >
+                  {tr.dividendHeatmap.clearFilter}
+                </button>
+              )}
+            </div>
           )}
-          <div className="text-right">
+          <div className="text-left sm:text-right">
             <div className="text-sm text-slate-400">{tr.dividendHeatmap.totalDividend}</div>
             <div className="text-lg font-bold text-amber-600">{fmt(totalDividend)} {baseCurrency}</div>
           </div>
